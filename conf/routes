@@ -1,0 +1,10 @@
+
+
+GET     /						controllers.Assets.at(path="/public",file="index.html")
+#GET		/task/add/:project	controllers.Application.addTask(project:Long)
+POST 	/task/add				controllers.Application.addTask
+GET		/task/:project			controllers.Application.taskList(project:Long)
+GET		/project				controllers.Application.allProject
+GET		/project/:project		controllers.Application.project(project:Long)
+GET     /assets/*file			controllers.Assets.versioned(path="/public", file: Asset)
+GET     /test					controllers.Application.index
