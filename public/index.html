@@ -50,7 +50,7 @@
               </ul>
           `,
           data: function () {
-            return {tasks: [],selectedTask:null,position:0,limit:5};
+            return {tasks: [],selectedTask:null,description:"",position:0,limit:5};
           },
           init: function () {},
           ready: function () {
@@ -83,7 +83,7 @@
             },
             select:function(task){
               this.selectedTask=task;
-              this.$set("description",task.description)
+              this.description=task.description
             },
             scroll:function(e){
               var diff=e.deltaY>0?1:-1;
