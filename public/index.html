@@ -40,6 +40,8 @@
                   {{ item.description }}
                 </li>
               </ul>
+              <input type="text" v-model="description"></input>
+              <button @click="addTask">Add Task</button>
             </div>
           `,
           data: function () {
@@ -47,13 +49,17 @@
           },
           init: function () {},
           ready: function () {
-            if (this.project != null) 
+            if (this.project != null)
               this.call()
             this.$watch("project", this.call);
           },
           methods: {
             call: function () {
               superagent.get("/task/" + this.project.id).set('Accept', 'application/json').end((err, res) => this.tasks = JSON.parse(res.text))
+            },
+            addTask:function(){
+              superagent.post("/task").send({project:this.project.id, description:this.description})
+                .set('Accept', 'application/json').end((err, res) => this.tasks.push(JSON.parse(res.text)));
             }
           }
         })
@@ -65,10 +71,12 @@
                   {{ project.name }}
                 </li>
               </ul>
+              <input type="text" v-model="newName"></input>
+              <button @click="newProject">New Project</button>
               <task-list :project="selectedProject"></task-list>
             `,
           data: function () {
-            return {selectedProject: null, projects: []};
+            return {selectedProject: null, projects: [],newName:""};
           },
           init: function () {
             superagent.get("/project").set('Accept', 'application/json').end((err, res) => {
@@ -79,6 +87,15 @@
           methods: {
             select: function (project) {
               this.selectedProject = project
+            },
+
+            newProject: function(){
+              superagent.post("/project").send({name:this.newName}).set('Accept','application/json').end((err,res)=>{
+                if(err)return;
+                var project=JSON.parse(res.text);
+                this.projects.push(project);
+                this.selectedProject=project;
+              });
             }
           }
         })
