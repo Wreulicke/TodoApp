@@ -44,7 +44,7 @@
                 <button @click="modifyTask">Modify Task</button>
               </div>
               <ul class="task-list">
-                <li class="status-{{item.status}}" v-for="item in tasks| limitBy limit position" @click="select(item)" @mousewheel.prevent="scroll" transition="staggered" stagger="20">
+                <li class="status-{{item.status}}" v-for="item in tasks| limitBy limit position" v-on:click="select(item)" v-on:mousewheel.prevent="scroll" transition="staggered" stagger="20">
                   {{ item.description }}
                 </li>
               </ul>
@@ -83,7 +83,7 @@
             },
             select:function(task){
               this.selectedTask=task;
-              this.description=task.description
+              this.$set("description",task.description)
             },
             scroll:function(e){
               var diff=e.deltaY>0?1:-1;
