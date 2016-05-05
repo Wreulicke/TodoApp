@@ -17,6 +17,7 @@ bin
 /.settings
 /.target
 /.setting
+.sbtserver
 
 #db
 .cache-main

@@ -13,6 +13,7 @@ GET		/task/:project			controllers.Application.taskList(project:Long)
 
 POST	/project				controllers.Application.newProject
 GET		/project				controllers.Application.allProject
+PUT		/project				controllers.Application.updateProject
 GET		/project/:project		controllers.Application.project(project:Long)
 
 # =========================================================================================

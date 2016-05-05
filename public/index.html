@@ -44,7 +44,7 @@
                 <button @click="modifyTask">Modify Task</button>
               </div>
               <ul class="task-list">
-                <li class="status-{{item.status}}" v-for="item in tasks| limitBy limit position" @click="select(item)" @mousewheel="scroll" transition="staggered" stagger="20">
+                <li class="status-{{item.status}}" v-for="item in tasks| limitBy limit position" @click="select(item)" @mousewheel.prevent="scroll" transition="staggered" stagger="20">
                   {{ item.description }}
                 </li>
               </ul>
@@ -86,7 +86,6 @@
               this.description=task.description
             },
             scroll:function(e){
-              e.preventDefault();
               var diff=e.deltaY>0?1:-1;
               this.position=(this.tasks.length+this.position+diff)%this.tasks.length||0;
             }
@@ -96,7 +95,7 @@
         var ProjectList = Vue.extend({
           template: `
               <ul class="project-list">
-                <li class="" v-for="project in projects"  v-on:click="select(project)">
+                <li class="" v-for="project in projects"  v-on:click="select(project)" contentEditable="true" @keypress.prevent.enter="changeName($event,project)">
                   {{ project.name }}
                 </li>
               </ul>
@@ -125,6 +124,10 @@
                 this.projects.push(project);
                 this.selectedProject=project;
               });
+            },
+            changeName:function(e,project){
+              project.name=e.target.innerText
+              superagent.put("/project").send(project).set('Accept','application/json').end((err,res)=>{})
             }
           }
         })
