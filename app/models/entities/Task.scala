@@ -1,3 +1,3 @@
 package models.entities
 
-case class Task(id: Long=0, description: String="", project:Long, status:Long=0) extends BaseEntity
+case class Task(id: Long=0, var description: String="", project:Long,var status:Long=0) extends BaseEntity

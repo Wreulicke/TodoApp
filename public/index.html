@@ -35,17 +35,22 @@
           template: `
             <div v-if="project">
               <h1>{{project.name}}のタスク一覧</h1>
+              <div v-if="!selectedTask">
+                <input type="text" v-model="description" @keyup.enter="addTask"></input>
+                <button @click="addTask">Add Task</button>
+              </div>
+              <div v-else>
+                <input type="text" v-model="description" @keyup.enter="modifyTask"></input>
+                <button @click="modifyTask">Modify Task</button>
+              </div>
               <ul class="task-list">
-                <li class="status-{{item.status}}" v-for="item in tasks| limitBy 5" transition="staggered" stagger="20">
+                <li class="status-{{item.status}}" v-for="item in tasks| limitBy limit position" @click="select(item)" @mousewheel="scroll" transition="staggered" stagger="20">
                   {{ item.description }}
                 </li>
               </ul>
-              <input type="text" v-model="description"></input>
-              <button @click="addTask">Add Task</button>
-            </div>
           `,
           data: function () {
-            return {tasks: []};
+            return {tasks: [],selectedTask:null,position:0,limit:5};
           },
           init: function () {},
           ready: function () {
@@ -55,11 +60,35 @@
           },
           methods: {
             call: function () {
-              superagent.get("/task/" + this.project.id).set('Accept', 'application/json').end((err, res) => this.tasks = JSON.parse(res.text))
+              this.selectedTask=null
+              superagent.get("/task/" + this.project.id).set('Accept', 'application/json').end(
+                (err, res) => {
+                  this.tasks = JSON.parse(res.text).reverse();
+                  this.position=(this.tasks.length+this.position)%this.tasks.length||0;
+
+                }
+              );
             },
             addTask:function(){
               superagent.post("/task").send({project:this.project.id, description:this.description})
-                .set('Accept', 'application/json').end((err, res) => this.tasks.push(JSON.parse(res.text)));
+                .set('Accept', 'application/json').end((err, res) => this.call());
+              this.description=""
+            },
+            modifyTask:function(){
+              this.selectedTask.description=this.description
+              this.description=""
+              superagent.put("/task").send(this.selectedTask)
+              .set('Accept', 'application/json')
+              .end((err, res) => this.call());
+            },
+            select:function(task){
+              this.selectedTask=task;
+              this.description=task.description
+            },
+            scroll:function(e){
+              e.preventDefault();
+              var diff=e.deltaY>0?1:-1;
+              this.position=(this.tasks.length+this.position+diff)%this.tasks.length||0;
             }
           }
         })

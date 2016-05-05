@@ -6,6 +6,7 @@ GET     /						controllers.Assets.at(path="/public",file="index.html")
 # =========================================================================================
 
 POST 	/task					controllers.Application.addTask
+PUT		/task					controllers.Application.modifyTask
 GET		/task/:project			controllers.Application.taskList(project:Long)
 
 # =========================================================================================
