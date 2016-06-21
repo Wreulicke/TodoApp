@@ -5,16 +5,23 @@
     <title></title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.21/vue.js" charset="utf-8"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/superagent/1.2.0/superagent.js" charset="utf-8"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&lang=en" rel=stylesheet type=text/css>
+    <link rel=stylesheet href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <script src="http://rawgit.com/posva/vue-mdl/master/dist/vue-mdl.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.1.3/material.indigo-pink.min.css">
+    <script defer src="https://code.getmdl.io/1.1.3/material.min.js"></script>
     <style media="screen">
-      li.status-0 {
+      .status-0 .mdl-card__title {
         background-color: #3CA39C;
       }
-      li.status-1 {
+      .status-1 .mdl-card__title {
         background-color: #FF827D;
       }
-      li.status-2 {
+      .status-2 .mdl-card__title {
         background-color: #E0DCBB;
       }
+
       .staggered-transition {
         transition: all 0.5s ease;
         margin: 0;
@@ -25,86 +32,116 @@
         opacity: 0;
         height: 0;
       }
+      .task-container{
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .task{
+        margin:20px;
+      }
+
 
     </style>
     <script type="text/javascript">
       document.addEventListener('DOMContentLoaded', init);
       function init() {
+        Vue.use(VueMdl.default)
         var TaskList = Vue.extend({
           props: ["project"],
           template: `
             <div v-if="project">
               <h1>{{project.name}}のタスク一覧</h1>
-              <div v-if="!selectedTask">
-                <input type="text" v-model="description" @keyup.enter="addTask"></input>
-                <button @click="addTask">Add Task</button>
+              <div class="task-container">
+                <mdl-card class="task mdl-card mdl-shadow--2dp status-{{item.status}}" data-status="{{item.status}}" v-for="item in tasks" supporting-text="supportingText">
+                  <div class="mdl-card__title" slot="title">
+                    <h2 class="mdl-card__title-text" contentEditable @keypress.prevent.enter="modifyTask($event, item)">{{item.description}}</h2>
+                  </div>
+                </mdl-card>
               </div>
-              <div v-else>
-                <input type="text" v-model="description" @keyup.enter="modifyTask"></input>
-                <button @click="modifyTask">Modify Task</button>
-              </div>
-              <ul class="task-list">
-                <li class="status-{{item.status}}" v-for="item in tasks| limitBy limit position" v-on:click="select(item)" v-on:mousewheel.prevent="scroll" transition="staggered" stagger="20">
-                  {{ item.description }}
-                </li>
-              </ul>
+            </div>
+
           `,
+          /*
+
+            <div v-if="!selectedTask">
+              <input type="text" v-model="description" @keypress.enter="addTask"></input>
+              <mdl-button v-mdl-ripple-effect @click="addTask">Add Task</mdl-button>
+            </div>
+            <div v-else>
+              <input type="text" v-model="description" @keypress.enter="modifyTask"></input>
+              <mdl-button v-mdl-ripple-effect @click="modifyTask">Modify Task</mdl-button>
+            </div>
+            <li class="status-{{item.status}}" v-for="item in tasks| limitBy limit position"  v-on:mousewheel.prevent="scroll" transition="staggered" stagger="20">
+              {{ item.description }}
+            </li>
+          */
           data: function () {
-            return {tasks: [],selectedTask:null,description:"",position:0,limit:5};
+            return {tasks: []};
           },
           init: function () {},
           ready: function () {
             if (this.project != null)
-              this.call()
+              this.call();
             this.$watch("project", this.call);
           },
           methods: {
             call: function () {
-              this.selectedTask=null
               superagent.get("/task/" + this.project.id).set('Accept', 'application/json').end(
                 (err, res) => {
                   this.tasks = JSON.parse(res.text).reverse();
-                  this.position=(this.tasks.length+this.position)%this.tasks.length||0;
-
+                  //this.position=(this.tasks.length+this.position)%this.tasks.length||0;
                 }
               );
             },
+            //TODO refactor
             addTask:function(){
+              if(!this.description)return;
               superagent.post("/task").send({project:this.project.id, description:this.description})
                 .set('Accept', 'application/json').end((err, res) => this.call());
               this.description=""
             },
-            modifyTask:function(){
-              this.selectedTask.description=this.description
-              this.description=""
-              superagent.put("/task").send(this.selectedTask)
+            modifyTask:function($event, task){
+              task.description=$event.target.innerText;
+              superagent.put("/task").send(task)
               .set('Accept', 'application/json')
               .end((err, res) => this.call());
-            },
-            select:function(task){
+            }
+            /*select:function(task){
               this.selectedTask=task;
               this.description=task.description
             },
             scroll:function(e){
               var diff=e.deltaY>0?1:-1;
               this.position=(this.tasks.length+this.position+diff)%this.tasks.length||0;
-            }
+            }*/
           }
         })
         Vue.component('task-list', TaskList);
         var ProjectList = Vue.extend({
+        props: ["selectedProject"],
+        template: `
+            <nav class="mdl-navigation" v-for="project in projects" v-on:click="select(project)" >
+              <a class="mdl-navigation__link"  contentEditable="true" @keypress.prevent.enter="changeName($event,project)">{{ project.name }}</a>
+            </nav>
+            <input type="text" v-model="newName" @keypress.enter="newProject"></input>
+            <mdl-button v-mdl-ripple-effect @click="newProject">New Project</mdl-button>
+          `,
+          /*
           template: `
               <ul class="project-list">
                 <li class="" v-for="project in projects"  v-on:click="select(project)" contentEditable="true" @keypress.prevent.enter="changeName($event,project)">
                   {{ project.name }}
                 </li>
               </ul>
-              <input type="text" v-model="newName"></input>
-              <button @click="newProject">New Project</button>
+              <input type="text" v-model="newName" @keypress.enter="newProject"></input>
+              <mdl-button v-mdl-ripple-effect @click="newProject">New Project</mdl-button>
               <task-list :project="selectedProject"></task-list>
             `,
+            */
           data: function () {
-            return {selectedProject: null, projects: [],newName:""};
+            return {projects: [],newName:""};
           },
           init: function () {
             superagent.get("/project").set('Accept', 'application/json').end((err, res) => {
@@ -118,12 +155,14 @@
             },
 
             newProject: function(){
+              if(!this.newName)return;
               superagent.post("/project").send({name:this.newName}).set('Accept','application/json').end((err,res)=>{
                 if(err)return;
                 var project=JSON.parse(res.text);
                 this.projects.push(project);
                 this.selectedProject=project;
               });
+              this.newName="";
             },
             changeName:function(e,project){
               project.name=e.target.innerText
@@ -132,13 +171,54 @@
           }
         })
         Vue.component('project-list', ProjectList);
-        var App = new Vue({el: "#app"});
+        var MyHeader=Vue.extend({
+          template:`
+            <header class="mdl-layout__header">
+              <div class="mdl-layout__header-row"><span class="header-title">Project Manager</span>
+                <div class="mdl-layout-spacer"></div>
+                <mdl-textfield :value.sync="newTaskName" @keypress.prevent.enter="hoge" @focusout="clearText('newTaskName')" id="add" expandable="add" class="mdl-textfield--align-right"></mdl-textfield>
+                <mdl-textfield id="search" :value.sync="searchText" expandable="search" @focusout="clearText('searchText')" class="mdl-textfield--align-right"></mdl-textfield>
+              </div>
+            </header>`,
+          data:function(){
+            return {newTaskName:"",searchText:""};
+          },
+          methods:{
+            hoge:function(){console.log("hhhh");},
+            clearText:function(key){this[key]="";}
+          }
+        })
+        Vue.component('my-header',MyHeader)
+        var App = new (Vue.extend({
+          data:function(){
+            return {
+              selectedProject:null
+            }
+          }
+        }))({
+          el: "#app",
+          components:VueMdl.components,
+          directives:VueMdl.directives,
+        });
         console.log("test");
       }
     </script>
   </head>
+
   <body id="app">
-    <h1>プロジェクト一覧</h1>
-    <project-list></project-list>
+    <div v-el="menu" class="mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header">
+      <my-header></my-header>
+      <div class="mdl-layout__drawer">
+        <a href.once="test" class="mdl-layout-title mdl-layout-title--icon">
+          <i class="material-icons">home</i><span>Projects</span>
+        </a>
+        <project-list :selected-project.sync="selectedProject"></project-list>
+      </div>
+      <main class="mdl-layout__content">
+        <div class="page-content mdl-grid">
+          <task-list :project="selectedProject"></task-list>
+        </div>
+      </main>
+    </div>
   </body>
 </html>
