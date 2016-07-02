@@ -1,0 +1,31 @@
+@media screen{
+  .status-0 .mdl-card__title {
+    background-color: #3CA39C;
+  }
+  .status-1 .mdl-card__title {
+    background-color: #FF827D;
+  }
+  .status-2 .mdl-card__title {
+    background-color: #E0DCBB;
+  }
+
+  .staggered-transition {
+    transition: all 0.5s ease;
+    margin: 0;
+    height: 20px;
+  }
+  .staggered-enter,
+  .staggered-leave {
+    opacity: 0;
+    height: 0;
+  }
+  .task-container{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .task{
+    margin:20px;
+  }
+}
